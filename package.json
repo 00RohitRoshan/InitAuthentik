@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "dependencies": {
     "@goauthentik/api": "^2025.6.3-1751754396"
   }
