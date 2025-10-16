@@ -1,0 +1,126 @@
+context: {}
+entries:
+- attrs:
+    authentication: none
+    denied_action: message_continue
+    designation: authentication
+    layout: content_left
+    name: Welcome To Central Bank!
+    policy_engine_mode: any
+    title: Login to your Account
+  conditions: []
+  identifiers:
+    # pk: 5afaa911-73c9-4010-87ce-2d9ec5ec8bfa
+    slug: cboi-authentication-flow
+  model: authentik_flows.flow
+  permissions: []
+  state: present
+- attrs:
+    execution_logging: false
+    expression: return request.user.attributes.get("is_temporary_password",False)
+      == True
+    name: cboi-force-password-change-isrequired-policy
+  conditions: []
+  identifiers:
+    name: cboi-force-password-change-isrequired-policy
+    # pk: 0fb05b75-f6ad-4633-9b62-71fe9edf9516
+  model: authentik_policies_expression.expressionpolicy
+  permissions: []
+  state: present
+- attrs:
+    geoip_binding: no_binding
+    network_binding: no_binding
+    remember_me_offset: seconds=0
+    session_duration: seconds=0
+  conditions: []
+  identifiers:
+    name: cboi-user-login-stage
+    # pk: 8c80ad0a-c09d-4c1d-9520-ad41a28947fa
+  model: authentik_stages_user_login.userloginstage
+  permissions: []
+  state: present
+- attrs:
+    enable_remember_me: true
+    password_stage: !Find [authentik_stages_password.passwordstage,[name,cboi-authentication-password]]
+    recovery_flow: !Find [authentik_flows.flow, [slug,forgot-password-flow]]
+    show_matched_user: true
+    user_fields:
+    - username
+  conditions: []
+  identifiers:
+    name: cboi-identification-stage
+    # pk: 8036fd68-77bf-4416-92c4-8913f428d0dc
+  model: authentik_stages_identification.identificationstage
+  permissions: []
+  state: present
+- attrs:
+    keep_context: true
+    mode: flow
+    target_flow: !Find [authentik_flows.flow, [slug,force-password-change-flow]]
+  conditions: []
+  identifiers:
+    name: cboi-redirect-to-password-change-flow
+    # pk: 92e1b6a0-43ac-4dfc-9b12-b3c89f1e8945
+  model: authentik_stages_redirect.redirectstage
+  permissions: []
+  state: present
+- attrs:
+    invalid_response_action: retry
+    policy_engine_mode: any
+    re_evaluate_policies: true
+  conditions: []
+  identifiers:
+    order: 0
+    # pk: e03e89bb-6d92-4ebd-92d5-fd05b28c4f60
+    stage: !Find [authentik_stages_identification.identificationstage,[name,cboi-identification-stage]]
+    target: !Find [authentik_flows.flow, [slug,cboi-authentication-flow]]
+  model: authentik_flows.flowstagebinding
+  permissions: []
+  state: present
+- attrs:
+    invalid_response_action: retry
+    policy_engine_mode: any
+    re_evaluate_policies: true
+  conditions: []
+  identifiers:
+    order: 50
+    # pk: 8ae73e3e-cf9f-452b-bc07-404520d7ceb0
+    stage: !Find [authentik_stages_redirect.redirectstage,[name,cboi-redirect-to-password-change-flow]]
+    target: !Find [authentik_flows.flow, [slug,cboi-authentication-flow]]
+  model: authentik_flows.flowstagebinding
+  permissions: []
+  state: present
+- attrs:
+    invalid_response_action: retry
+    policy_engine_mode: any
+    re_evaluate_policies: true
+  conditions: []
+  identifiers:
+    order: 200
+    # pk: 67684258-54e8-4ce1-878d-2003e9ec0751
+    stage: !Find [authentik_stages_user_login.userloginstage,[name,cboi-user-login-stage]]
+    target: !Find [authentik_flows.flow, [slug,cboi-authentication-flow]]
+  model: authentik_flows.flowstagebinding
+  permissions: []
+  state: present
+- attrs:
+    enabled: true
+    timeout: 30
+  conditions: []
+  identifiers:
+    order: 0
+    # pk: 610a81d5-96f6-4d85-bae5-54f444281cec
+    policy: !Find [authentik_policies_expression.expressionpolicy,[name,cboi-force-password-change-isrequired-policy]]
+    # target: !Find [authentik_flows.flow, [slug,cboi-authentication-flow]]
+    target: !Find [authentik_flows.flowstagebinding,
+      [stage, !Find [authentik_stages_redirect.redirectstage,[name,cboi-redirect-to-password-change-flow]]],
+      [target, !Find [authentik_flows.flow,[slug,cboi-authentication-flow]]]
+    ]
+  model: authentik_policies.policybinding
+  permissions: []
+  state: present
+metadata:
+  labels:
+    blueprints.goauthentik.io/generated: 'true'
+  name: authentik Export - 2025-08-25 06:09:56.910479+00:00
+version: 1
